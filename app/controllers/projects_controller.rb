@@ -54,6 +54,8 @@ class ProjectsController < ApplicationController
   end
 
   def index # rubocop:disable Format/AbcSize
+    ensure_pagination_reset_on_sort_change
+
     respond_to do |format|
       format.html do
         flash.now[:error] = @query.errors.full_messages if @query.errors.any?
@@ -156,6 +158,18 @@ class ProjectsController < ApplicationController
     else
       redirect_to job_status_path(job.job_id)
     end
+  end
+
+  # When the sorting criteria changes, the pagination should always reset to the
+  # first page. This leads to a better UX since the previous position in the pagination becomes
+  # obsolete when the underlying collection changes due to sorting adjustments. It is better to start
+  # from a fresh perspective on the data.
+  def ensure_pagination_reset_on_sort_change
+    if params[:sortBy].present? && session[:project_list_sortBy] != params[:sortBy]
+      params[:page] = 1 # Reset to the first page if sorting changes
+    end
+
+    session[:project_list_sortBy] = params[:sortBy]
   end
 
   def supported_export_formats
