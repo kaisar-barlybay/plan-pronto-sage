@@ -28,7 +28,9 @@
 
 require "spec_helper"
 
-RSpec.describe "Progress tracking admin page", :cuprite, :js,
+RSpec.describe "Progress tracking admin page",
+               :js,
+               :with_cuprite,
                with_flag: { percent_complete_edition: true } do
   include ActionView::Helpers::SanitizeHelper
   include Toasts::Expectations
@@ -68,5 +70,24 @@ RSpec.describe "Progress tracking admin page", :cuprite, :js,
     click_on "Save"
     expect_and_dismiss_toaster(message: "Successful update.")
     expect(Setting.find_by(name: "work_package_done_ratio").value).to eq("field")
+  end
+
+  it "changes the total percent complete mode" do
+    Setting.total_percent_complete_mode = "simple_average"
+    login_as(admin)
+    visit admin_settings_progress_tracking_path
+
+    expect(page).to have_field("Simple average", checked: true)
+    expect(page).to have_field("Weighted by work", checked: false)
+
+    find(:radio_button, "Weighted by work").click
+    click_on "Save"
+    expect_and_dismiss_toaster(message: "Successful update.")
+    expect(Setting.find_by(name: "total_percent_complete_mode").value).to eq("work_weighted_average")
+
+    find(:radio_button, "Simple average").click
+    click_on "Save"
+    expect_and_dismiss_toaster(message: "Successful update.")
+    expect(Setting.find_by(name: "total_percent_complete_mode").value).to eq("simple_average")
   end
 end
