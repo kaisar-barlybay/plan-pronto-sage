@@ -35,10 +35,18 @@ class CustomField < ApplicationRecord
   # to work as desired.
   # Without it, the after_commit callbacks of acts_as_list will prevent the touch to happen.
   # https://github.com/rails/rails/issues/26726
+
+  has_one :custom_option,
+          -> { where(parent_id: nil) },
+          dependent: :delete,
+          inverse_of: "custom_field"
   has_many :custom_options,
-           -> { order(position: :asc) },
+           ->(current_custom_field) do
+             where(parent_id: current_custom_field.custom_option.id).order(position: :asc)
+           end,
            dependent: :delete_all,
            inverse_of: "custom_field"
+
   accepts_nested_attributes_for :custom_options
 
   acts_as_list scope: [:type]

@@ -36,6 +36,8 @@ class CustomOption < ApplicationRecord
 
   before_destroy :assure_at_least_one_option
 
+  has_closure_tree order: "position", numeric_order: true
+
   def to_s
     value
   end
